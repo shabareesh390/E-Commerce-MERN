@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
+import useCartStore from '../store/useCartStore';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [added, setAdded] = useState(false);
+  const addToCart = useCartStore((state) => state.addToCart);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -21,6 +25,12 @@ const ProductDetail = () => {
     
     fetchProduct();
   }, [id]);
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   if (loading) {
     return (
@@ -73,9 +83,19 @@ const ProductDetail = () => {
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <button
               type="button"
-              className="flex-1 bg-indigo-600 border border-transparent rounded-xl py-4 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-all"
+              onClick={handleAddToCart}
+              className={`flex-1 border border-transparent rounded-xl py-4 px-8 flex items-center justify-center text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-all ${
+                added ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
             >
-              Add to Cart
+              {added ? 'Added to Cart!' : 'Add to Cart'}
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/cart')}
+              className="flex-1 bg-white border border-slate-300 rounded-xl py-4 px-8 flex items-center justify-center text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-all"
+            >
+              View Cart
             </button>
           </div>
         </div>
