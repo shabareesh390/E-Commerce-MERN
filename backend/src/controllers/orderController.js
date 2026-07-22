@@ -118,9 +118,22 @@ const getOrderById = async (req, res) => {
   }
 };
 
+// @desc    Get all orders
+// @route   GET /api/orders
+// @access  Private/Admin
+const getOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({}).populate('user', 'id name').sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createPaymentIntent,
   createOrder,
   getMyOrders,
-  getOrderById
+  getOrderById,
+  getOrders
 };
