@@ -97,10 +97,31 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// @desc    Get similar products based on tags
+// @route   GET /api/products/:id/similar
+// @access  Public
+const getSimilarProducts = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    
+    // Find products with at least one matching tag, exclude the current product
+    const similarProducts = await Product.find({
+      _id: { $ne: product._id },
+      tags: { $in: product.tags }
+    }).limit(4);
+
+    res.json(similarProducts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  getSimilarProducts
 };
