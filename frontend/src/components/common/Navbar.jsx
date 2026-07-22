@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
-import { ShoppingCart, User, LogOut } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import axiosClient from '../../api/axiosClient';
 
 const Navbar = () => {
@@ -34,6 +34,9 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm font-medium text-slate-700">Hi, {user.name}</span>
+                <Link to="/orders" className="text-slate-500 hover:text-indigo-600 transition-colors" title="My Orders">
+                  <Package className="h-5 w-5" />
+                </Link>
                 {user.role === 'admin' && (
                   <Link to="/admin" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                     Admin
@@ -42,6 +45,7 @@ const Navbar = () => {
                 <button 
                   onClick={handleLogout}
                   className="text-slate-500 hover:text-red-600 transition-colors"
+                  title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
