@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import axiosClient from '../api/axiosClient';
 import useCartStore from '../store/useCartStore';
 import useAuthStore from '../store/useAuthStore';
@@ -10,7 +11,6 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [added, setAdded] = useState(false);
   const addToCart = useCartStore((state) => state.addToCart);
   const { user } = useAuthStore();
 
@@ -45,7 +45,7 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     addToCart(product);
-    setAdded(true);
+    toast.success('Added to Cart!');
     
     // Record cart interaction if logged in
     if (user) {
@@ -55,8 +55,6 @@ const ProductDetail = () => {
         console.error('Failed to record interaction', e);
       }
     }
-    
-    setTimeout(() => setAdded(false), 2000);
   };
 
   if (loading) {
@@ -120,11 +118,9 @@ const ProductDetail = () => {
             <button
               type="button"
               onClick={handleAddToCart}
-              className={`flex-1 border border-transparent rounded-xl py-4 px-8 flex items-center justify-center text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md transition-all ${
-                added ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 border border-transparent rounded-xl py-4 px-8 flex items-center justify-center text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md transition-all"
             >
-              {added ? 'Added to Cart!' : 'Add to Cart'}
+              Add to Cart
             </button>
             <button
               type="button"
