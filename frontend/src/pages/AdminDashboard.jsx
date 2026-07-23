@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Users, Package, ShoppingCart, DollarSign, Plus } from 'lucide-react';
+import { Users, Package, ShoppingCart, DollarSign, Plus, X } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import axiosClient from '../api/axiosClient';
 
@@ -11,7 +11,13 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({ name: '', price: 0, description: '', brand: '', stock: 0, category: '', image: '' });
 
   useEffect(() => {
     if (user && user.role === 'admin') {
@@ -22,18 +28,55 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, productsRes, ordersRes] = await Promise.all([
+      const [statsRes, productsRes, ordersRes, categoriesRes] = await Promise.all([
         axiosClient.get('/stats'),
         axiosClient.get('/products'),
-        axiosClient.get('/orders')
+        axiosClient.get('/orders'),
+        axiosClient.get('/categories')
       ]);
       setStats(statsRes.data);
-      setProducts(productsRes.data.products);
-      setOrders(ordersRes.data);
+      setProducts(productsRes.data.products || []);
+      setOrders(ordersRes.data || []);
+      setCategories(categoriesRes.data || []);
     } catch (error) {
       console.error('Failed to fetch admin data', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setFormData({
+        name: product.name || '',
+        price: product.price || 0,
+        description: product.description || '',
+        brand: product.brand || '',
+        stock: product.stock || 0,
+        category: product.category?._id || '',
+        image: product.images?.[0] || ''
+      });
+    } else {
+      setEditingProduct(null);
+      setFormData({ name: '', price: 0, description: '', brand: '', stock: 0, category: '', image: '' });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { ...formData, images: formData.image ? [formData.image] : [] };
+      if (editingProduct) {
+        await axiosClient.put(`/products/${editingProduct._id}`, payload);
+      } else {
+        await axiosClient.post('/products', payload);
+      }
+      setIsModalOpen(false);
+      fetchData(); // Refresh list
+    } catch (error) {
+      alert('Failed to save product');
     }
   };
 
@@ -61,7 +104,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
       <div className="md:flex md:items-center md:justify-between mb-8">
         <div className="flex-1 min-w-0">
           <h2 className="text-2xl font-bold leading-7 text-slate-900 sm:text-3xl sm:truncate">
@@ -157,7 +200,7 @@ const AdminDashboard = () => {
         <div>
           <div className="mb-4 flex justify-between items-center">
             <h3 className="text-lg font-medium leading-6 text-slate-900">Manage Products</h3>
-            <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+            <button onClick={() => openModal()} className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
               <Plus className="-ml-1 mr-2 h-5 w-5" />
               Add Product
             </button>
@@ -174,7 +217,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="flex space-x-4">
-                    <button className="text-indigo-600 hover:text-indigo-900 text-sm font-medium transition">Edit</button>
+                    <button onClick={() => openModal(product)} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium transition">Edit</button>
                     <button onClick={() => handleDeleteProduct(product._id)} className="text-red-600 hover:text-red-900 text-sm font-medium transition">Delete</button>
                   </div>
                 </li>
@@ -196,7 +239,7 @@ const AdminDashboard = () => {
                     <p className="text-sm text-slate-500 mt-1">User: {order.user?.name || 'Unknown User'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-slate-900">${order.totalPrice.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-slate-900">${order.totalPrice?.toFixed(2)}</p>
                     <p className={`mt-1 text-xs px-2 py-1 inline-flex leading-5 font-semibold rounded-full ${
                       order.isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
@@ -206,6 +249,65 @@ const AdminDashboard = () => {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Product Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900">{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-500 transition">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleProductSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                  <input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price ($)</label>
+                    <input type="number" step="0.01" required value={formData.price} onChange={(e) => setFormData({...formData, price: Number(e.target.value)})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Stock</label>
+                    <input type="number" required value={formData.stock} onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <select required value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500">
+                      <option value="">Select Category</option>
+                      {categories.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Brand</label>
+                    <input type="text" required value={formData.brand} onChange={(e) => setFormData({...formData, brand: e.target.value})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
+                  <input type="url" value={formData.image} onChange={(e) => setFormData({...formData, image: e.target.value})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500" placeholder="https://example.com/image.jpg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <textarea rows="4" required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border-slate-300 rounded-md p-2 border focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div className="pt-4 flex justify-end space-x-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="bg-slate-100 text-slate-700 px-6 py-2 rounded-lg font-medium hover:bg-slate-200 transition">Cancel</button>
+                  <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Save Product</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

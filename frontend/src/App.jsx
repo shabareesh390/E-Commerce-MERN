@@ -12,6 +12,8 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import AdminDashboard from './pages/AdminDashboard';
+import Wishlist from './pages/Wishlist';
+import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
 const ErrorFallback = ({ error, resetErrorBoundary }) => (
@@ -46,6 +48,8 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/order/:id" element={<OrderDetail />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

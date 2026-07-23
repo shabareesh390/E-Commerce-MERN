@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const APIFeatures = require('../utils/apiFeatures');
 
 // @desc    Get all products

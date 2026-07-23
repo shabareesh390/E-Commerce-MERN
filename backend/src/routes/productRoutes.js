@@ -8,8 +8,11 @@ const {
   getSimilarProducts
 } = require('../controllers/productController');
 const { protect, requireAdmin } = require('../middleware/authMiddleware');
+const reviewRoutes = require('./reviewRoutes');
 
 const router = express.Router();
+
+router.use('/:productId/reviews', reviewRoutes);
 
 router.route('/')
   .get(getProducts)

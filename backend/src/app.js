@@ -8,6 +8,8 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const interactionRoutes = require('./routes/interactionRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const userRoutes = require('./routes/userRoutes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 // Load env vars
@@ -30,6 +32,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/interactions', interactionRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/users', userRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
